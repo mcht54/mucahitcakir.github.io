@@ -317,6 +317,11 @@ html.tv .camnote{position:absolute;right:1.4vw;top:1.2vh;z-index:6;font-family:v
 <script>
 // ===== Ayarlar =====
 const TV=document.documentElement.classList.contains("tv");
+const BUILD="2026-11-12c";   // yayınlarken version.txt ile aynı yapılır
+// Yeni sürüm yayınlanınca açık sayfa (TV) kendini önbelleği atlayarak yeniler
+function newURL(extra){const u=new URLSearchParams(location.search);u.set("v",Date.now().toString(36));if(extra)for(const k in extra)u.set(k,extra[k]);return location.pathname+"?"+u.toString().replace(/=(&|$)/g,"$1");}
+setInterval(()=>{fetch("version.txt?"+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{t=t.trim();
+  if(t&&t!==BUILD&&(TV||(!busy&&!queued&&Date.now()-lastAct>60000)))location.replace(newURL());}).catch(()=>{});},5*60e3);
 const CONFIG={
   chatEndpoint:"",   // Claude API'ye bağlanan sunucu adresi (ör. /api/chat). Boşsa yerel cevap motoru çalışır.
   leadEndpoint:"",   // İletişim formunun gönderileceği adres. Boşsa form demo modunda.
@@ -588,7 +593,7 @@ function status(){const n=new Date(),d=n.getDay(),h=n.getHours()+n.getMinutes()/
 status();setInterval(status,30000);
 if(!TV){let lastInput=Date.now();["pointermove","pointerdown","keydown","touchstart","wheel","scroll"].forEach(ev=>addEventListener(ev,()=>lastInput=Date.now(),{passive:true}));
   setInterval(()=>{if(document.hidden||innerWidth<900||innerWidth<innerHeight||scrollY>40||!br.hidden||document.activeElement===q)return;
-    if(Date.now()-lastInput>120000&&!busy&&!queued)location.href=location.pathname+"?vitrin&oto";},5000);}
+    if(Date.now()-lastInput>120000&&!busy&&!queued)location.href=newURL({vitrin:"",oto:""});},5000);}
 
 // ================= Vitrin modu (?vitrin) =================
 // Ofis camındaki TV: kimse dokunmaz. Maskot kendi kendine sahneler oynar; ?vitrin&kamera ile önünden geçeni görür.
@@ -607,7 +612,7 @@ if(TV)(function(){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{n.className="";old.className="out";}));setTimeout(()=>old.remove(),800);},2600);
   // Ekran yanığı olmasın: yazılar ara ara birkaç piksel kayar; 6 saatte bir sayfa tazelenir
   setInterval(()=>{const dx=(Math.random()*2-1)*10,dy=(Math.random()*2-1)*8;document.querySelectorAll("header,.side,.tvqr").forEach(e=>e.style.transform=`translate(${dx}px,${dy}px)`);},10*60e3);
-  setTimeout(()=>location.reload(),6*3600e3);
+  setTimeout(()=>location.replace(newURL()),6*3600e3);
   const auto=/[?&]oto/.test(location.search),t0=Date.now();
   const back=()=>{if(Date.now()-t0>1500)location.href=location.pathname;};
   if(auto){["pointerdown","keydown","touchstart","wheel"].forEach(ev=>addEventListener(ev,back,{passive:true}));}
