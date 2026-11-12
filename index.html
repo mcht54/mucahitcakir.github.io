@@ -385,7 +385,7 @@ function resize(){const W=innerWidth,H=innerHeight,s=Math.max(W/IMG.w,H/IMG.h);
 function toScreen([x,y]){return[view.ox+x*view.s,view.oy+y*view.s];}
 // ---- Bakış: fareyi yumuşak bir yayla takip eder (her yön, çaprazlar dahil) ----
 const look={tx:0,ty:0,x:0,y:0,vx:0,vy:0,lastMove:-1e9,drawn:"",typingUntil:0,on:false};
-addEventListener("pointermove",e=>{if(e.pointerType!=="mouse"||scrollY>innerHeight*.7)return;if(performance.now()<look.typingUntil)return;
+addEventListener("pointermove",e=>{if(e.pointerType!=="mouse"||scrollY>innerHeight*.7||look.centering)return;if(performance.now()<look.typingUntil)return;
   const[hx_,hy__]=toScreen(HEAD),hy_=hy__-scrollY;
   const dx=(e.clientX-hx_)/(innerWidth*.45),dy=(e.clientY-hy_)/(innerHeight*.5);
   look.tx=Math.max(-1,Math.min(1,dx));look.ty=Math.max(-1,Math.min(1,dy));
@@ -394,7 +394,10 @@ function stepLook(dt){
   // kritik sönümlü yay: hızlı ama yumuşak, aşma yok
   const w=reduce?60:4.5;
   for(const[a,v,tg]of[["x","vx","tx"],["y","vy","ty"]]){const d=look[tg]-look[a];look[v]+=(d*w*w-2*w*look[v])*dt;look[a]+=look[v]*dt;}}
-async function center(){look.tx=look.ty=0;const t0=performance.now();while((Math.abs(look.x)>.03||Math.abs(look.y)>.03)&&performance.now()-t0<1800)await sleep(30);look.x=look.y=look.vx=look.vy=0;}
+// Hareketten önce baş yumuşakça ortaya gelir; bu sırada fare/kamera yeni hedef veremez (yoksa baş takılıp sonra sıçrar)
+async function center(){look.centering=true;look.tx=look.ty=0;const t0=performance.now();
+  while((Math.abs(look.x)>.02||Math.abs(look.y)>.02||Math.abs(look.vx)>.05)&&performance.now()-t0<2500)await sleep(30);
+  look.x=look.y=look.vx=look.vy=0;look.centering=false;}
 function render(){
   const show=gazeOK&&(Math.abs(look.x)>.01||Math.abs(look.y)>.01);
   if(!show){if(look.on){headCv.classList.remove("on");look.on=false;look.drawn="";}return;}
@@ -518,7 +521,7 @@ let idleI=1;setInterval(()=>{if(TV||busy||queued||Date.now()-lastAct<26000||docu
 const said=new Set();
 function once(key,fn){if(said.has(key)||busy||queued)return;said.add(key);busy=true;lastAct=Date.now();run(async()=>{await fn();finish();});}
 // Yazarken soru kutusuna (aşağı) bakar
-q.addEventListener("input",()=>{loadGaze();look.tx=0;look.ty=.9;look.typingUntil=performance.now()+1500;look.lastMove=performance.now();if(cur==="bekleme")endLoop();});
+q.addEventListener("input",()=>{if(look.centering)return;loadGaze();look.tx=0;look.ty=.9;look.typingUntil=performance.now()+1500;look.lastMove=performance.now();if(cur==="bekleme")endLoop();});
 // ---- Sahne içi tarayıcı: siteyi "bilgisayarda" açar ----
 const WORKS=[{"k": "mchttasarim", "n": "Mchttasarım", "u": "www.mchttasarim.com.tr"}, {"k": "mchtmagaza", "n": "MCHT Mağaza", "u": "www.mchtmagaza.com.tr"}, {"k": "sakaryapromosyon", "n": "Sakarya Promosyon", "u": "sakaryapromosyon.com.tr"}, {"k": "sakaryareklamajans", "n": "Sakarya Reklam Ajansı", "u": "sakaryareklamajans.com.tr"}, {"k": "webtasarimajansi", "n": "Web Tasarım Ajansı", "u": "webtasarimajansi.net"}];
 const br=$("browser"),bwin=$("bwin"),bview=$("bview"),burl=$("burl"),bopen=$("bopen"),btabs=$("btabs");
@@ -580,7 +583,7 @@ if(TV)(function(){
   document.querySelectorAll("header,.side").forEach(e=>e.classList.add("tvl"));
 
   // Bakış: gözünü bir yere çevirip bir süre tutar (kamera varsa geçen kişiye)
-  function gaze(x,y){look.tx=Math.max(-1,Math.min(1,x));look.ty=Math.max(-1,Math.min(1,y));look.lastMove=performance.now();loadGaze();}
+  function gaze(x,y){if(look.centering)return;look.tx=Math.max(-1,Math.min(1,x));look.ty=Math.max(-1,Math.min(1,y));look.lastMove=performance.now();loadGaze();}
   let gazeHold=0;setInterval(()=>{if(cur||performance.now()<gazeHold)return;look.lastMove=performance.now();},500);
   // Altyazı balonunda konuşur
   function line(text,label){if(label){bq.hidden=false;bq.textContent=label;}else bq.hidden=true;return say(text);}
@@ -624,13 +627,13 @@ if(TV)(function(){
     $("camnote").hidden=false;
     const v=document.createElement("video");v.muted=true;v.playsInline=true;v.srcObject=stream;v.play();
     const W=80,H=60,c=document.createElement("canvas");c.width=W;c.height=H;const cx=c.getContext("2d",{willReadFrequently:true});
-    let prev=null,hits=0,lastGreet=0,lastSeen=0;
+    let prev=null,hits=0,lastGreet=0,lastSeen=0,fx=null,fy=null;
     setInterval(()=>{if(v.readyState<2)return;cx.drawImage(v,0,0,W,H);const d=cx.getImageData(0,0,W,H).data;const g=new Float32Array(W*H);let m=0;
       for(let i=0;i<W*H;i++){g[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;m+=g[i];}m/=W*H;
       for(let i=0;i<W*H;i++)g[i]-=m;                       // ekranın kendi ışık değişimini yok say
       if(prev){let n=0,sx=0,sy=0;for(let i=0;i<W*H;i++)if(Math.abs(g[i]-prev[i])>28){n++;sx+=i%W;sy+=(i/W)|0;}
-        if(n>W*H*.02&&n<W*H*.6){hits++;const x=sx/n/W,y=sy/n/H;
-          if(!cur){gaze((.5-x)*2.2,(y-.45)*1.2);gazeHold=performance.now()+3000;}   // ayna: kameraya göre sağ-sol ters
+        if(n>W*H*.02&&n<W*H*.6){hits++;fx=fx==null?sx/n/W:fx*.75+sx/n/W*.25;fy=fy==null?sy/n/H:fy*.75+sy/n/H*.25;const x=fx,y=fy;
+          if(!cur&&!busy){gaze((.5-x)*2.2,(y-.45)*1.2);gazeHold=performance.now()+3000;}   // ayna: kameraya göre sağ-sol ters
           lastSeen=Date.now();
           if(hits>=3&&Date.now()-lastGreet>25000&&!busy&&!queued){lastGreet=Date.now();
             run(()=>playScene(async()=>{await act("el-sallama");await line(["Selam! Seni gördüm.","Hey, sen! Evet, sana diyorum.","Geçerken bir el sallayayım dedim."][Math.random()*3|0]);}));}}
