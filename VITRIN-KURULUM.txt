@@ -1,0 +1,24 @@
+MASKOT VİTRİN TV — KURULUM
+
+Adres (yayınlanınca): https://mucahitcakir.net/?vitrin
+Kamera ile (önünden geçeni görüp el sallar): https://mucahitcakir.net/?vitrin&kamera
+Şimdilik yerelde: http://127.0.0.1:8765/?vitrin
+
+NE YAPAR
+- Kimse dokunmadan döner: el sallar, saati söyler, sık sorulan soruları düşünüp cevaplar,
+  arkadaki ekrandaki siteyi gösterir, QR'ı yanıp söndürüp "telefonunla okut" der, kahve içer.
+- Mesai içinde "Kapımız açık, buyur içeri gel", dışında "Ofis kapalı ama ben hâlâ çalışıyorum" der.
+- QR -> mucahitcakir.net (utm_source=vitrin): telefonda maskota soru sorulur.
+- Yazılar 10 dakikada bir birkaç piksel kayar (ekran yanığı), sayfa 6 saatte bir kendini tazeler.
+
+TV'YE BAĞLI BİLGİSAYARDA (Windows kısayol hedefi)
+  "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk --autoplay-policy=no-user-gesture-required --use-fake-ui-for-media-stream "https://mucahitcakir.net/?vitrin&kamera"
+  Mac: open -a "Google Chrome" --args --kiosk --autoplay-policy=no-user-gesture-required --use-fake-ui-for-media-stream "https://mucahitcakir.net/?vitrin&kamera"
+  Çıkış: Alt+F4 (Windows) / Cmd+Q (Mac)
+  --use-fake-ui-for-media-stream kamera iznini sormadan verir (yalnız bu kiosk için kullanın).
+- Uyku ve ekran koruyucuyu kapatın. Kamera kullanılacaksa web kamerasını cama, sokağa bakacak şekilde koyun.
+
+KAMERA NOTU
+- Görüntü kaydedilmez, hiçbir yere gönderilmez; tarayıcıda 80x60 piksel küçük karede yalnız hareket farkına bakılır.
+- Ekranın sağ üstünde küçük "Kamera görüntü kaydetmez" notu çıkar. Cama ayrıca küçük bir bilgilendirme
+  etiketi ("Bu vitrinde hareket algılayan kamera vardır, kayıt yapılmaz") koymanız önerilir.
