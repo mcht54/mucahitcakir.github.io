@@ -185,10 +185,17 @@ html.tv .bubble{left:auto!important;right:3.4vw;top:auto!important;bottom:5vh;wi
 html.tv .bubble.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{0%{transform:scale(.86);opacity:.2}100%{transform:none;opacity:1}}
 html.tv .bubble::before{display:block;left:22%;top:-1.4vh;width:2.8vh;height:2.8vh;background:#FBF8F4;border:0;box-shadow:-.5vh -.5vh 0 0 rgba(227,38,46,.95)}
-html.tv .bubble .q{font-size:2.3vh;margin-bottom:1.2vh;white-space:normal;color:var(--m);font-weight:500}
-html.tv .bubble .a{font-size:4.6vh;line-height:1.28;font-weight:700;max-height:none;overflow:visible;letter-spacing:-.01em}
+html.tv .bubble .q{font-size:3vh;margin-bottom:1.2vh;white-space:normal;color:var(--m);font-weight:500}
+html.tv .bubble .a{font-size:7vh;line-height:1.12;font-weight:800;font-family:var(--display);letter-spacing:-.02em;max-height:none;overflow:visible;letter-spacing:-.01em}
 html.tv .dots i{background:#9A9088}
 html.tv .dots i{width:1.6vh;height:1.6vh}
+html.tv .tvqr strong.tel{display:block;font-family:var(--display);font-weight:800;font-size:4.6vh;letter-spacing:-.01em;margin-top:.6vh;color:#fff}
+html.tv .tvcard{position:fixed;inset:0;z-index:9;display:grid;place-items:center;text-align:center;padding:6vh 6vw;background:var(--m);color:#fff;clip-path:inset(0 100% 0 0);pointer-events:none}
+html.tv .tvcard.on{clip-path:inset(0 0 0 0);transition:clip-path .55s cubic-bezier(.7,0,.2,1)}
+html.tv .tvcard.off{clip-path:inset(0 0 0 100%);transition:clip-path .55s cubic-bezier(.7,0,.2,1)}
+html.tv .tvcard b{display:block;font-family:var(--display);font-weight:800;font-size:17vh;line-height:.92;letter-spacing:-.04em;text-wrap:balance}
+html.tv .tvcard span{display:block;margin-top:4vh;font-family:var(--display);font-weight:800;font-size:8vh;color:#0B0A0A;letter-spacing:-.02em}
+html.tv .tvcard span:empty{display:none}
 html.tv .tvframe{position:fixed;inset:0;z-index:8;pointer-events:none;box-shadow:inset 0 0 0 0 rgba(227,38,46,0);transition:box-shadow .6s}
 html.tv.hey .tvframe{animation:frame 1.1s ease-in-out infinite}
 @keyframes frame{0%,100%{box-shadow:inset 0 0 0 .8vh rgba(227,38,46,.95),inset 0 0 8vh rgba(227,38,46,.5)}50%{box-shadow:inset 0 0 0 .3vh rgba(227,38,46,.6),inset 0 0 3vh rgba(227,38,46,.2)}}
@@ -226,8 +233,9 @@ html.tv .camnote{position:absolute;right:1.4vw;top:1.2vh;z-index:6;font-family:v
   <div class="tvonly roll" id="roll"><span>Web sitesi</span></div>
 </section>
 
-<div class="tvonly tvqr tvl" id="tvqr"><div class="qb" id="qb"></div><div><b>Telefonunla okut,</b><span>bana oradan soru sor.<br>İlk görüşme ücretsiz.</span><em>mucahitcakir.net</em></div></div>
+<div class="tvonly tvqr tvl" id="tvqr"><div class="qb" id="qb"></div><div><b>Telefonunla okut,</b><span>bana oradan soru sor.<br>İlk görüşme ücretsiz.</span><em>mucahitcakir.net</em><strong class="tel">0531 972 93 36</strong></div></div>
 <div class="tvonly tvframe" aria-hidden="true"></div>
+<div class="tvonly tvcard" id="tvcard" aria-hidden="true"><div><b></b><span></span></div></div>
 <div class="tvonly camnote" id="camnote" hidden>Kamera görüntü kaydetmez · yalnızca hareketi algılar</div>
 <div class="bubble hide" id="bubble" aria-live="polite"><div class="q" id="bq" hidden></div><div class="a" id="ba"></div></div>
 
@@ -614,32 +622,38 @@ if(TV)(function(){
   async function think(label,answerText){bq.hidden=false;bq.textContent=label;show('<span class="dots"><i></i><i></i><i></i></span>');
     let typed=null;const start=()=>{typed=new Promise(r=>type(answerText,false,r));};
     await act("dusunme",{at:[3.0,start]});if(!typed)start();await talkUntil(typed);}
+  // Uzaktan (camın ardından, birkaç metreden) okunur: cümleler kısa, kartlar dev
+  const CARD=$("tvcard");
+  async function card(big,small){CARD.querySelector("b").textContent=big;CARD.querySelector("span").textContent=small||"";
+    CARD.classList.remove("off");CARD.classList.add("on");await sleep(3600);CARD.classList.remove("on");CARD.classList.add("off");await sleep(700);CARD.classList.remove("off");}
   const QA=[
-    ["Sık sorulan: Google'da neden çıkmıyorum?","Çoğu zaman sebep eksik bir Google işletme profili ve yavaş bir site. İkisini de birlikte düzeltiyoruz."],
-    ["Sık sorulan: Instagram'a ne paylaşsam?","Aylık içerik planını, tasarımı ve Reels'i biz hazırlarız. Sen işine bak, hesabın düzenli aksın."],
-    ["Sık sorulan: Tabela mı, web sitesi mi?","İkisi de! Tabela yoldan geçeni, web sitesi Google'da arayanı yakalar."],
-    ["Sık sorulan: Logom eski gibi duruyor…","Kurumsal kimliği yeniden tasarlar, kartvizitten tabelaya her yere aynı dille uygularız."],
-    ["Sık sorulan: Matbaa işi de yapıyor musunuz?","Evet: kartvizit, katalog, broşür, davetiye. Tasarımı da baskısı da bizden."],
-    ["Sık sorulan: İnternetten satış yapabilir miyim?","Tabii. Ürünlerin, sanal POS'un ve kargo bağlantısıyla hazır bir e-ticaret sitesi kurarız."]
+    ["Google'da var mısın?","Yoksan, müşteri rakibe gidiyor."],
+    ["Web siten var mı?","Yoksa yapalım. Varsa büyütelim."],
+    ["Instagram'ın sessiz mi?","İçeriği biz üretelim, sen işine bak."],
+    ["Logon eski mi kaldı?","Yenileyelim, tabelaya kadar taşıyalım."],
+    ["Kartvizit? Katalog? Broşür?","Tasarımı da baskısı da bizden."]
   ];
   let qi=0,wi=0;
-  const WAVES=["Hey! Evet, sana el sallıyorum.","Selam! Bir saniye durur musun?","Merhaba komşu! Ben buradayım."];
+  const WAVES=["Evet, sana diyorum!","Selam komşu!","Bir saniye bakar mısın?"];
+  const TEL="0531 972 93 36";
+  const ask2=async()=>{const [q,a]=QA[qi++%QA.length];await card(q.toLocaleUpperCase("tr"));await think(q,a);};
   const SCENES=[
-    async()=>{document.documentElement.classList.add("hey");await act("el-sallama");await line(WAVES[wi++%WAVES.length]);},
-    async()=>{const t=hm(now());await line(isOpen()?`Saat ${t}. Kapımız açık, buyur içeri gel; çay da kahve de var.`:`Saat ${t}. Ofis kapalı ama ben hâlâ çalışıyorum.`);},
-    async()=>{const [q,a]=QA[qi++%QA.length];await think(q,a);},
-    async()=>{await act("gosterme");await line("Arkadaki ekranda gördüğün site bizim işimiz. Sıradaki seninki olsun mu?");},
-    async()=>{$("tvqr").classList.add("ping");setTimeout(()=>$("tvqr").classList.remove("ping"),5000);gaze(-1,.6);gazeHold=performance.now()+5000;await sleep(1400);await line("Telefonunu çıkar, soldaki kodu okut. Bana oradan soru sor, cevaplayayım.");},
-    async()=>{const [q,a]=QA[qi++%QA.length];await think(q,a);},
-    async()=>{await act("kahve");await line(isOpen()?"Kahvemi içtim, işe devam. Senin markan için ne yapalım?":"Gece mesaisi için bir kahve daha.");},
-    async()=>{await line("Web, sosyal medya, matbaa, tabela… Adapazarı'nda hepsi tek ekipte: Mchttasarım.");}
+    async()=>{await card("HEY!","Ben buradayım");document.documentElement.classList.add("hey");await act("el-sallama");await line(WAVES[wi++%WAVES.length]);},
+    ask2,
+    async()=>{const t=hm(now());await line(isOpen()?"Açığız. Buyur içeri gel!":`Saat ${t}. Ben hâlâ çalışıyorum.`);},
+    async()=>{await act("gosterme");await line("Arkadaki site bizim işimiz.");},
+    async()=>{await card("İLK GÖRÜŞME ÜCRETSİZ",TEL);},
+    ask2,
+    async()=>{await act("kahve");await line("Bir kahve daha…");},
+    async()=>{$("tvqr").classList.add("ping");setTimeout(()=>$("tvqr").classList.remove("ping"),5000);gaze(-1,.6);gazeHold=performance.now()+5000;await sleep(1400);await line("Yaklaş, kodu okut, bana yaz.");},
+    async()=>{await card("WEB · BASKI · SOSYAL MEDYA","Mchttasarım · Adapazarı");}
   ];
   let si=0,lastScene=0;
   async function playScene(fn){if(busy)return;busy=true;try{await fn();}catch(_){}document.documentElement.classList.remove("hey");
-    await sleep(5000);bubble.classList.add("hide");finish();lastScene=Date.now();}
+    await sleep(4000);bubble.classList.add("hide");finish();lastScene=Date.now();}
   // İlk sahne kısa süre sonra; sonra ~18 sn arayla sırayla (arada laptopta çalışır, kahve içer)
   setTimeout(()=>run(()=>playScene(SCENES[si++%SCENES.length])),1500);
-  setInterval(()=>{if(busy||queued||Date.now()-lastScene<18000)return;run(()=>playScene(SCENES[si++%SCENES.length]));},1000);
+  setInterval(()=>{if(busy||queued||Date.now()-lastScene<12000)return;run(()=>playScene(SCENES[si++%SCENES.length]));},1000);
   // Boşta: ara ara sokağa doğru göz gezdirir
   setInterval(()=>{if(cur||busy||queued||performance.now()<gazeHold)return;const r=Math.random();
     if(r<.35){gaze((Math.random()*2-1)*.8,(Math.random()-.3)*.5);gazeHold=performance.now()+2500+Math.random()*2500;}
